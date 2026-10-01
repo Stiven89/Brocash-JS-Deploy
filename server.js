@@ -21,6 +21,19 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==========================================
+// 2.1. RUTA RAÍZ (HOME)
+// ==========================================
+app.get('/', (req, res) => {
+    // Si tienes un index.html en public, lo servirá aquí. Si no, responde con status OK.
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            res.status(200).send('🚀 Servidor Brocash-JS funcionando correctamente.');
+        }
+    });
+});
+
+// ==========================================
 // 3. RUTAS DE AUTENTICACIÓN (LOGIN/REGISTRO)
 // ==========================================
 app.post('/login', authController.login);
@@ -53,18 +66,17 @@ app.get('/estado-credito/:cedula', creditoController.obtenerEstadoUsuario);
 // 5. RUTAS DE PAGOS
 app.get('/estado-credito-id/:id', pagoController.obtenerEstadoPorId);
 app.post('/registrar-pago', pagoController.registrarPago);
- 
 
 // ==========================================
-// 5. MIDDLEWARE DE REGISTRO / MANEJO DE RUTAS NO ENCONTRADAS (404)
+// 6. MIDDLEWARE DE REGISTRO / MANEJO DE RUTAS NO ENCONTRADAS (404)
 // ==========================================
 app.use((req, res) => {
-    console.log(`⚠️ Ruta no encontrada (404): ${req.method} ${req.url}`);
+    console.log(`⚠️️ Ruta no encontrada (404): ${req.method} ${req.url}`);
     res.status(404).json({ ok: false, mensaje: `La ruta ${req.method} ${req.url} no existe en el servidor.` });
 });
 
 // ==========================================
-// 6. ARRANQUE DEL SERVIDOR
+// 7. ARRANQUE DEL SERVIDOR
 // ==========================================
 const PORT = process.env.PORT || 8080;
 
@@ -73,4 +85,3 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Brocash corriendo en el puerto ${PORT}`);
     console.log(`==================================================`);
 });
-
