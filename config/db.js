@@ -1,24 +1,23 @@
-// config/db.js
 const mysql = require('mysql2');
 
-// Pool de conexiones: se reconecta solo si MySQL cierra alguna conexión
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'Brocash',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'Brocash',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-// Prueba de conexión al arrancar
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('❌ Error al conectar a la base de datos MySQL:', err);
         return;
     }
-    console.log('¡Conectado con éxito a la base de datos MySQL Brocash desde la configuración MVC! 🛢️');
+
+    console.log('✅ Conectado con éxito a la base de datos MySQL');
     connection.release();
 });
 

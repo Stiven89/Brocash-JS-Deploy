@@ -66,10 +66,11 @@ app.use((req, res) => {
 // ==========================================
 // 6. ARRANQUE DEL SERVIDOR
 // ==========================================
-const PORT = 8080;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`==================================================`);
-    console.log(`🚀 Servidor Brocash corriendo en http://localhost:${PORT}`);
+    console.log(`🚀 Servidor Brocash corriendo en el puerto ${PORT}`);
     console.log(`==================================================`);
 });
 
