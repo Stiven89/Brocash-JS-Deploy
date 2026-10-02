@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Brocash - Login</title>
-    <link rel="stylesheet" href="Style.css"> 
+    <link rel="stylesheet" href="Style.css">
 </head>
 
 <body>
+
 <header class="header">
     <div class="encabezado">
         <img src="Logos/Logo.png" class="logo">
         <h1>Brocash</h1>
     </div>
 </header>
+
 <div class="container">
     <form class="form-card" id="form-login">
+
         <h2>Bienvenido</h2>
         <p>Tu plataforma de crédito en línea</p>
 
         <input type="number" id="login-cedula" name="Cedula" placeholder="Cédula" required>
+
         <input type="password" id="login-password" name="password" placeholder="Contraseña" required>
-        
+
         <label class="check">
             <input type="checkbox"> Recordar
         </label>
@@ -40,96 +44,205 @@
 </div>
 
 <script>
-    // 1. COMPROBAR ESTADO DE CRÉDITO AL SALIR DEL CAMPO CÉDULA
-    document.getElementById("login-cedula").addEventListener("blur", function() {
-        const cedula = this.value;
-        const contenedorAcciones = document.getElementById("seccion-acciones-credito");
 
-        if (cedula && cedula.length >= 5) {
-            fetch(`/estado-credito/${cedula}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.tieneCredito) {
-                        contenedorAcciones.innerHTML = `
-                            <div class="info-credito-login" style="border-left-color: ${data.estado === 'Aprobado' ? '#2ecc71' : data.estado === 'Rechazado' ? '#e74c3c' : '#f1c40f'}">
-                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>⚠️ Solicitud Activa N° ${data.idCredito}</strong></p>
-                                <p style="margin: 0; font-size: 14px;">Estado actual: <span class="badge-login ${data.estado}">${data.estado}</span></p>
-                            </div>
-                            <button type="submit">Ingresar a mi Cuenta</button>
-                        `;
-                    } else {
-                        contenedorAcciones.innerHTML = `<button type="submit">Ingresar</button>`;
+document.getElementById("login-cedula").addEventListener("blur", function() {
+
+    const cedula = this.value;
+    const contenedorAcciones = document.getElementById("seccion-acciones-credito");
+
+    if (cedula && cedula.length >= 5) {
+
+        fetch(`/estado-credito/${cedula}`)
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                if (data.tieneCredito) {
+
+                    let colorEstado = "#f1c40f";
+
+                    if (String(data.estado).toLowerCase() === "aprobado") {
+                        colorEstado = "#2ecc71";
                     }
-                })
-                .catch(error => console.error("❌ Error al comprobar estado del crédito:", error));
-        }
-    });
 
-    // 2. ENVIAR FORMULARIO DE LOGIN Y REDIRIGIR SEGÚN EL ESTADO DEL CRÉDITO
-    document.getElementById("form-login").addEventListener("submit", function(e) {
-        e.preventDefault();
+                    if (String(data.estado).toLowerCase() === "rechazado") {
+                        colorEstado = "#e74c3c";
+                    }
 
-        const cedula = document.getElementById("login-cedula").value;
-        const password = document.getElementById("login-password").value;
+                    contenedorAcciones.innerHTML = `
+                        <div class="info-credito-login" style="border-left-color: ${colorEstado}">
+                            <p style="margin: 0 0 5px 0; font-size: 14px;">
+                                <strong>Solicitud N° ${data.idCredito}</strong>
+                            </p>
 
-        fetch("/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({ Cedula: cedula, password: password })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.ok) 
-{
-            // Guardar usuario en sesión
-                sessionStorage.setItem("usuarioLogueado", JSON.stringify(data.usuario));
+                            <p style="margin: 0; font-size: 14px;">
+                                Estado actual:
+                                <span class="badge-login">${data.estado}</span>
+                            </p>
+                        </div>
 
-                // A. Si el usuario es Analista, redirige a su panel especial
-                if (data.usuario && data.usuario.rol === 'analista') {
-                    window.location.href = "Vista_Analista.html";
-                    return;
+                        <button type="submit">Ingresar a mi Cuenta</button>
+                    `;
+
+                } else {
+
+                    contenedorAcciones.innerHTML = `
+                        <button type="submit">Ingresar</button>
+                    `;
+
                 }
 
-                // B. Si es Cliente, evaluar el estado de su crédito
-                fetch(`/estado-credito/${cedula}`)
-                    .then(resCredito => resCredito.json())
-                    .then(creditoData => {
-                        if (!creditoData.tieneCredito) {
-                            // Sin crédito activo -> Ir a formulario de solicitud
-                            window.location.href = "Solicitud_de_credito.html";
-                        } else {
-                            const estadoLower = String(creditoData.estado).toLowerCase();
+            })
 
-                            if (estadoLower === 'aprobado') {
-                                // CRÉDITO APROBADO -> Redirigir a Pasarela de Pagos con su ID cargado
-                                window.location.href = `Realizar_Pago.html?id=${creditoData.idCredito}`;
-                            } else if (estadoLower === 'pendiente') {
-                                // PENDIENTE -> Mostrar mensaje
-                                alert(`👋 Hola, tu solicitud de crédito N° ${creditoData.idCredito} está actualmente EN ESTUDIO por nuestros analistas.`);
-                                window.location.href = "Solicitud_de_credito.html";
-                            } else {
-                                // RECHAZADO -> Permitir radicar una nueva solicitud
-                                window.location.href = "Solicitud_de_credito.html";
-                            }
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Error al verificar crédito al ingresar:", err);
-                        window.location.href = "Solicitud_de_credito.html";
-                    });
+            .catch(error => {
 
-            } else {
-                alert("❌ " + (data.mensaje || "Datos de ingreso incorrectos"));
-            }
+                console.error("❌ Error al comprobar estado del crédito:", error);
+
+                contenedorAcciones.innerHTML = `
+                    <button type="submit">Ingresar</button>
+                `;
+
+            });
+    }
+});
+
+
+document.getElementById("form-login").addEventListener("submit", function(e) {
+
+    e.preventDefault();
+
+    const cedula = document.getElementById("login-cedula").value;
+    const password = document.getElementById("login-password").value;
+
+    fetch("/login", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+
+        body: JSON.stringify({
+            Cedula: cedula,
+            password: password
         })
-        .catch(err => {
-            console.error("❌ Error en el proceso de login:", err);
-            alert("Error al conectar con el servidor.");
-        });
+
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        if (data.ok) {
+
+            sessionStorage.setItem(
+                "usuarioLogueado",
+                JSON.stringify(data.usuario)
+            );
+
+            // ANALISTA
+            if (data.usuario && data.usuario.rol === "analista") {
+
+                window.location.href = "Vista_Analista.html";
+
+                return;
+            }
+
+            // CLIENTE
+            fetch(`/estado-credito/${cedula}`)
+
+                .then(resCredito => resCredito.json())
+
+                .then(creditoData => {
+
+                    // EL CLIENTE TODAVÍA NO TIENE SOLICITUD
+                    if (!creditoData.tieneCredito) {
+
+                        window.location.href = "Solicitud_de_credito.html";
+
+                        return;
+                    }
+
+                    const estadoLower = String(
+                        creditoData.estado
+                    ).toLowerCase();
+
+                    // CRÉDITO APROBADO
+                    if (estadoLower === "aprobado") {
+
+                        window.location.href =
+                            `Estado_Credito.html?id=${creditoData.idCredito}&estado=aprobado`;
+
+                    }
+
+                    // CRÉDITO PENDIENTE
+                    else if (estadoLower === "pendiente") {
+
+                        window.location.href =
+                            `Estado_Credito.html?id=${creditoData.idCredito}&estado=pendiente`;
+
+                    }
+
+                    // CRÉDITO RECHAZADO
+                    else if (estadoLower === "rechazado") {
+
+                        window.location.href =
+                            `Estado_Credito.html?id=${creditoData.idCredito}&estado=rechazado`;
+
+                    }
+
+                    // CUALQUIER OTRO ESTADO
+                    else {
+
+                        window.location.href = "Solicitud_de_credito.html";
+
+                    }
+
+                })
+
+                .catch(err => {
+
+                    console.error(
+                        "Error al verificar crédito al ingresar:",
+                        err
+                    );
+
+                    alert(
+                        "No fue posible consultar el estado de tu crédito."
+                    );
+
+                });
+
+        }
+
+        else {
+
+            alert(
+                "❌ " +
+                (data.mensaje || "Datos de ingreso incorrectos")
+            );
+
+        }
+
+    })
+
+    .catch(err => {
+
+        console.error(
+            "❌ Error en el proceso de login:",
+            err
+        );
+
+        alert(
+            "Error al conectar con el servidor."
+        );
+
     });
+
+});
+
 </script>
 
 </body>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Brocash - Estado del Crédito</title>
+
+    <link rel="stylesheet" href="Style.css">
+
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="encabezado">
+
+        <img src="Logos/Logo.png" class="logo">
+
+        <h1>Brocash</h1>
+
+    </div>
+
+</header>
+
+
+<div class="container">
+
+    <div class="form-card" id="estado-container">
+
+        <h2 id="titulo-estado">
+            Consultando estado...
+        </h2>
+
+        <p id="mensaje-estado">
+            Estamos consultando la información de tu crédito.
+        </p>
+
+        <div id="informacion-credito"></div>
+
+        <div id="botones-estado"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const parametros = new URLSearchParams(
+    window.location.search
+);
+
+const idCredito = parametros.get("id");
+
+const estado = String(
+    parametros.get("estado") || ""
+).toLowerCase();
+
+
+const titulo = document.getElementById(
+    "titulo-estado"
+);
+
+const mensaje = document.getElementById(
+    "mensaje-estado"
+);
+
+const informacion = document.getElementById(
+    "informacion-credito"
+);
+
+const botones = document.getElementById(
+    "botones-estado"
+);
+
+
+if (estado === "aprobado") {
+
+    titulo.innerHTML = "🎉 ¡Crédito aprobado!";
+
+    mensaje.innerHTML =
+        "¡Excelente noticia! Tu solicitud de crédito fue aprobada por nuestros analistas.";
+
+    informacion.innerHTML = `
+
+        <div class="info-credito-login"
+             style="border-left-color: #2ecc71; margin-top: 20px;">
+
+            <p>
+                <strong>Estado:</strong>
+                <span class="badge-login">
+                    APROBADO
+                </span>
+            </p>
+
+            <p>
+                <strong>Número de crédito:</strong>
+                ${idCredito || "No disponible"}
+            </p>
+
+        </div>
+
+    `;
+
+    botones.innerHTML = `
+
+        <button
+            type="button"
+            onclick="realizarPago()">
+
+            💳 Realizar pago
+
+        </button>
+
+        <br><br>
+
+        <button
+            type="button"
+            onclick="cerrarSesion()">
+
+            Cerrar sesión
+
+        </button>
+
+    `;
+
+}
+
+
+else if (estado === "pendiente") {
+
+    titulo.innerHTML =
+        "🕐 Solicitud en estudio";
+
+    mensaje.innerHTML =
+        "Tu solicitud fue recibida correctamente y actualmente está siendo revisada por nuestros analistas.";
+
+    informacion.innerHTML = `
+
+        <div class="info-credito-login"
+             style="border-left-color: #f1c40f; margin-top: 20px;">
+
+            <p>
+                <strong>Estado:</strong>
+                <span class="badge-login">
+                    EN ESTUDIO
+                </span>
+            </p>
+
+            <p>
+                <strong>Número de solicitud:</strong>
+                ${idCredito || "No disponible"}
+            </p>
+
+        </div>
+
+    `;
+
+    botones.innerHTML = `
+
+        <button
+            type="button"
+            onclick="volverInicio()">
+
+            Volver
+
+        </button>
+
+    `;
+
+}
+
+
+else if (estado === "rechazado") {
+
+    titulo.innerHTML =
+        "❌ Solicitud rechazada";
+
+    mensaje.innerHTML =
+        "En esta ocasión tu solicitud de crédito no fue aprobada.";
+
+    informacion.innerHTML = `
+
+        <div class="info-credito-login"
+             style="border-left-color: #e74c3c; margin-top: 20px;">
+
+            <p>
+                <strong>Estado:</strong>
+                <span class="badge-login">
+                    RECHAZADO
+                </span>
+            </p>
+
+            <p>
+                <strong>Número de solicitud:</strong>
+                ${idCredito || "No disponible"}
+            </p>
+
+        </div>
+
+    `;
+
+    botones.innerHTML = `
+
+        <button
+            type="button"
+            onclick="nuevaSolicitud()">
+
+            📝 Nueva solicitud
+
+        </button>
+
+    `;
+
+}
+
+
+else {
+
+    titulo.innerHTML =
+        "⚠️ Estado no disponible";
+
+    mensaje.innerHTML =
+        "No fue posible identificar el estado de tu solicitud.";
+
+    botones.innerHTML = `
+
+        <button
+            type="button"
+            onclick="volverInicio()">
+
+            Volver al inicio
+
+        </button>
+
+    `;
+
+}
+
+
+function realizarPago() {
+
+    window.location.href =
+        `Realizar_Pago.html?id=${idCredito}`;
+
+}
+
+
+function nuevaSolicitud() {
+
+    window.location.href =
+        "Solicitud_de_credito.html";
+
+}
+
+
+function volverInicio() {
+
+    window.location.href =
+        "Pagina_Principal.html";
+
+}
+
+
+function cerrarSesion() {
+
+    sessionStorage.removeItem(
+        "usuarioLogueado"
+    );
+
+    window.location.href =
+        "Pagina_Principal.html";
+
+}
+
+</script>
+
+</body>
+
+</html>
