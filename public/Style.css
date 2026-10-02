@@ -6,6 +6,7 @@ body {
   text-align: center;
 }
 
+
 /* ENCABEZADO (logo + título) */
 .encabezado {
   display: flex;
@@ -15,7 +16,8 @@ body {
 }
 
 .logo {
-  width: 250px; /* Tamaño ideal favor no cambiar  */
+  width: 250px;
+  /* Tamaño ideal, favor no cambiar */
   margin-bottom: 10px;
 }
 
@@ -25,11 +27,12 @@ h1 {
   margin: 10px 0;
 }
 
-h2 {  
+h2 {
   font-size: 22px;
   color: #55d67a;
   margin-bottom: 15px;
 }
+
 
 /* CONTENEDOR UNIVERSAL (CENTRA TODO) */
 .container {
@@ -39,7 +42,8 @@ h2 {
   padding: 20px 0;
 }
 
-/* FORMULARIO TIPO CARD (Soporta .form-card o .container form) */
+
+/* FORMULARIO TIPO CARD */
 .form-card,
 .container form {
   width: 100%;
@@ -49,7 +53,8 @@ h2 {
   border-radius: 20px;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
   display: flex;
-  flex-direction: column; /* Alineación vertical de inputs */
+  flex-direction: column;
+  /* Alineación vertical de inputs */
   box-sizing: border-box;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
@@ -59,6 +64,7 @@ h2 {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
   transform: translateY(-2px);
 }
+
 
 /* INPUTS GENERALES */
 .form-card input,
@@ -86,6 +92,7 @@ h2 {
   box-shadow: 0 0 0 3px rgba(126, 217, 87, 0.25);
 }
 
+
 /* LABELS */
 .form-card label,
 .container form label {
@@ -95,6 +102,7 @@ h2 {
   color: #333;
   margin-bottom: 4px;
 }
+
 
 /* CHECKBOX */
 .form-card .check,
@@ -111,6 +119,7 @@ h2 {
   width: auto;
   margin-bottom: 0;
 }
+
 
 /* BOTONES FORMULARIO */
 .form-card button,
@@ -130,6 +139,7 @@ h2 {
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
+
 /* HOVER Y ACTIVE BOTONES */
 .form-card button:hover,
 .form-card input[type="submit"]:hover,
@@ -146,6 +156,7 @@ h2 {
   transform: translateY(0);
 }
 
+
 /* LINKS */
 .links {
   margin-top: 15px;
@@ -158,6 +169,7 @@ h2 {
   margin: 0 5px;
 }
 
+
 /* RESPONSIVE */
 @media (max-width: 480px) {
   .form-card,
@@ -167,9 +179,11 @@ h2 {
   }
 }
 
+
 /* ====================================================
    TARJETA DINÁMICA DE ESTADO (LOGIN) - PROYECTO BROCASH
    ==================================================== */
+
 .info-credito-login {
   background: #f8f9fa;
   border-left: 5px solid #f1c40f;
@@ -184,17 +198,27 @@ h2 {
   font-weight: bold;
   padding: 3px 8px;
   border-radius: 3px;
-  color: white;
+  color: #2ecc71;
   display: inline-block;
 }
 
-.Pendiente { background: #f1c40f; }
-.Aprobado  { background: #2ecc71; }
-.Rechazado { background: #e74c3c; }
+.Pendiente {
+  background: #f1c40f;
+}
+
+.Aprobado {
+  background: #2ecc71;
+}
+
+.Rechazado {
+  background: #e74c3c;
+}
+
 
 /* ====================================================
    PANEL DE ANALISTA - PROYECTO BROCASH
    ==================================================== */
+
 .container-analista {
   max-width: 1200px;
   margin: 20px auto;
@@ -216,7 +240,7 @@ h2 {
   margin-top: 20px;
 }
 
-.tabla-creditos th, 
+.tabla-creditos th,
 .tabla-creditos td {
   padding: 12px;
   text-align: left;
@@ -236,9 +260,11 @@ h2 {
   background-color: #f1f1f1;
 }
 
-/* BOTONES CRUD (Aislados del 100% width general) */
+
+/* BOTONES CRUD */
 .btn-crud {
-  width: auto !important; /* Evita que el botón ocupe toda la fila */
+  width: auto !important;
+  /* Evita que el botón ocupe toda la fila */
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
@@ -254,21 +280,49 @@ h2 {
   filter: brightness(0.92);
 }
 
-.btn-aprobar { background-color: #2ecc71; color: white; }
-.btn-rechazar { background-color: #e67e22; color: white; }
-.btn-eliminar { background-color: #e74c3c; color: white; }
+.btn-aprobar {
+  background-color: #2ecc71;
+  color: white;
+}
 
+.btn-rechazar {
+  background-color: #e67e22;
+  color: white;
+}
+
+.btn-eliminar {
+  background-color: #e74c3c;
+  color: white;
+}
+
+
+/* ESTADOS CRUD */
 .status-crud {
   font-weight: bold;
   padding: 4px 8px;
   border-radius: 4px;
 }
 
-.status-pendiente { background-color: #f1c40f; color: #fff; }
-.status-aprobado  { background-color: #2ecc71; color: #fff; }
-.status-rechazado  { background-color: #e74c3c; color: #fff; }
+.status-pendiente {
+  background-color: #f1c40f;
+  color: #fff;
+}
 
-/*   ESTILOS DE PASARELA DE PAGOS  */
+.status-aprobado {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+.status-rechazado {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+
+/* ====================================================
+   ESTILOS DE PASARELA DE PAGOS
+   ==================================================== */
+
 .card-pago {
   max-width: 500px !important;
 }
@@ -315,7 +369,8 @@ h2 {
   padding-bottom: 5px;
 }
 
-/* Ocultar elementos */
+
+/* OCULTAR ELEMENTOS */
 .hidden {
   display: none !important;
 }
