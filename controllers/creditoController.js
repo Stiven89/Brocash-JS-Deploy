@@ -107,7 +107,7 @@ exports.procesarSolicitud = (req, res) => {
         ocupacion,
         telefono,
         ingresos_mensuales,
-        montoSolicitado,
+        monto_solicitado,
         plazoMeses
     } = req.body;
 
@@ -117,124 +117,183 @@ exports.procesarSolicitud = (req, res) => {
             ? req.body.fechaSolicitud
             : new Date().toISOString().slice(0, 10);
 
-    Credito.verificarPendiente(Number(Cedula), (errorVerificacion, filas) => {
+    // =========================================
+    // VALIDAR DATOS NUMÉRICOS
+    // =========================================
 
-        if (errorVerificacion) {
+    const cedulaNumero = Number(Cedula);
+    const ingresosNumero = Number(ingresos_mensuales);
+    const montoNumero = Number(monto_solicitado);
+    const plazoNumero = Number(plazoMeses) || 12;
 
-            console.error('❌ Error verificando solicitud:', errorVerificacion);
+    if (
+        !Number.isFinite(cedulaNumero) ||
+        !Number.isFinite(ingresosNumero) ||
+        !Number.isFinite(montoNumero) ||
+        montoNumero <= 0
+    ) {
 
-            if (esJSON(req)) {
-                return res.status(500).json({
-                    ok: false,
-                    mensaje: 'Error al validar la solicitud'
-                });
-            }
+        console.error('❌ Datos inválidos en solicitud:', {
+            Cedula,
+            ingresos_mensuales,
+            monto_solicitado,
+            plazoMeses
+        });
 
-            return res.status(500).send('Error interno');
+        if (esJSON(req)) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'El monto solicitado no es válido'
+            });
         }
 
-        if (filas.length > 0) {
+        return res.status(400).send(
+            '<h2>El monto solicitado no es válido.</h2>'
+        );
+    }
 
-            if (esJSON(req)) {
-                return res.status(409).json({
-                    ok: false,
-                    mensaje: "El usuario ya tiene una solicitud 'Pendiente'"
-                });
-            }
+    Credito.verificarPendiente(
+        cedulaNumero,
+        (errorVerificacion, filas) => {
 
-            return res.send(`
-                <script>
-                    alert("⚠️ Ya cuentas con una solicitud 'Pendiente'. Debes esperar su evaluación.");
-                    window.location.href = "javascript:history.back()";
-                </script>
-            `);
-        }
+            if (errorVerificacion) {
 
-        const nuevosDatos = {
-
-            Cedula: Number(Cedula),
-
-            idAnalista: 1020856325,
-
-            ingresos: Number(ingresos_mensuales),
-
-            montoSolicitado: Number(montoSolicitado),
-
-            plazoMeses: Number(plazoMeses) || 12,
-
-            estado: 'Pendiente',
-
-            Nombre,
-
-            email,
-
-            ocupacion,
-
-            telefono,
-
-            fechaSolicitud
-        };
-
-        Credito.crear(nuevosDatos, (error, results) => {
-
-            if (error) {
-
-                console.error('❌ Error al guardar crédito:', error);
+                console.error(
+                    '❌ Error verificando solicitud:',
+                    errorVerificacion
+                );
 
                 if (esJSON(req)) {
                     return res.status(500).json({
                         ok: false,
-                        mensaje: 'Error al procesar solicitud'
+                        mensaje: 'Error al validar la solicitud'
                     });
                 }
 
-                return res.send('<h2>Error al procesar la solicitud</h2>');
+                return res.status(500).send(
+                    'Error interno'
+                );
             }
 
-            const idCredito = results.insertId;
+            if (filas.length > 0) {
 
-            if (esJSON(req)) {
+                if (esJSON(req)) {
+                    return res.status(409).json({
+                        ok: false,
+                        mensaje:
+                            "El usuario ya tiene una solicitud 'Pendiente'"
+                    });
+                }
 
-                return res.status(201).json({
+                return res.send(`
+                    <script>
+                        alert("⚠️ Ya cuentas con una solicitud 'Pendiente'. Debes esperar su evaluación.");
+                        window.location.href = "javascript:history.back()";
+                    </script>
+                `);
+            }
 
-                    ok: true,
+            const nuevosDatos = {
 
-                    mensaje: 'Solicitud de crédito registrada correctamente',
+                Cedula: cedulaNumero,
 
-                    credito: {
-                        idCredito,
-                        Cedula: Number(Cedula),
-                        estado: 'Pendiente',
-                        montoSolicitado: Number(montoSolicitado)
+                idAnalista: 1020856325,
+
+                ingresos: ingresosNumero,
+
+                montoSolicitado: montoNumero,
+
+                plazoMeses: plazoNumero,
+
+                estado: 'Pendiente',
+
+                Nombre,
+
+                email,
+
+                ocupacion,
+
+                telefono,
+
+                fechaSolicitud
+            };
+
+            Credito.crear(
+                nuevosDatos,
+                (error, results) => {
+
+                    if (error) {
+
+                        console.error(
+                            '❌ Error al guardar crédito:',
+                            error
+                        );
+
+                        if (esJSON(req)) {
+                            return res.status(500).json({
+                                ok: false,
+                                mensaje:
+                                    'Error al procesar solicitud'
+                            });
+                        }
+
+                        return res.send(
+                            '<h2>Error al procesar la solicitud</h2>'
+                        );
                     }
 
-                });
-            }
+                    const idCredito = results.insertId;
 
-            res.send(`
-                <div style="text-align: center; font-family: Arial; padding-top: 50px;">
+                    if (esJSON(req)) {
 
-                    <h1 style="color: #2ecc71;">
-                        ¡Solicitud Radicada con Éxito! 🎉
-                    </h1>
+                        return res.status(201).json({
 
-                    <p>
-                        Estimado/a <strong>${Nombre}</strong>,
-                        tu radicado es:
-                        <strong>${idCredito}</strong>
-                    </p>
+                            ok: true,
 
-                    <a href="/Pagina_Principal.html"
-                       style="background: #3498db; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
-                        Finalizar
-                    </a>
+                            mensaje:
+                                'Solicitud de crédito registrada correctamente',
 
-                </div>
-            `);
+                            credito: {
 
-        });
+                                idCredito,
 
-    });
+                                Cedula: cedulaNumero,
+
+                                estado: 'Pendiente',
+
+                                montoSolicitado: montoNumero
+
+                            }
+
+                        });
+                    }
+
+                    res.send(`
+                        <div style="text-align: center; font-family: Arial; padding-top: 50px;">
+
+                            <h1 style="color: #2ecc71;">
+                                ¡Solicitud Radicada con Éxito! 🎉
+                            </h1>
+
+                            <p>
+                                Estimado/a <strong>${Nombre}</strong>,
+                                tu radicado es:
+                                <strong>${idCredito}</strong>
+                            </p>
+
+                            <a href="/Pagina_Principal.html"
+                               style="background: #3498db; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
+                                Finalizar
+                            </a>
+
+                        </div>
+                    `);
+
+                }
+            );
+
+        }
+    );
 };
 
 
@@ -248,7 +307,10 @@ exports.listarCreditos = (req, res) => {
 
         if (error) {
 
-            console.error('❌ Error al obtener créditos:', error);
+            console.error(
+                '❌ Error al obtener créditos:',
+                error
+            );
 
             return res.status(500).json({
                 ok: false,
@@ -269,9 +331,13 @@ exports.listarCreditos = (req, res) => {
 
 exports.modificarEstado = (req, res) => {
 
-    const idCredito = req.body.id_credito || req.body.idCredito;
+    const idCredito =
+        req.body.id_credito ||
+        req.body.idCredito;
 
-    const nuevoEstado = req.body.nuevo_estado || req.body.nuevoEstado;
+    const nuevoEstado =
+        req.body.nuevo_estado ||
+        req.body.nuevoEstado;
 
     if (!idCredito || !nuevoEstado) {
 
@@ -289,234 +355,280 @@ exports.modificarEstado = (req, res) => {
         WHERE C.ID_CREDITO = ?
     `;
 
-    db.query(queryBuscarCliente, [idCredito], (errConsulta, resultados) => {
+    db.query(
+        queryBuscarCliente,
+        [idCredito],
+        (errConsulta, resultados) => {
 
-        if (errConsulta) {
-            console.error('❌ Error buscando cliente:', errConsulta);
-        }
+            if (errConsulta) {
+                console.error(
+                    '❌ Error buscando cliente:',
+                    errConsulta
+                );
+            }
 
-        const clienteInfo =
-            (resultados && resultados.length > 0)
-                ? resultados[0]
-                : null;
+            const clienteInfo =
+                (resultados && resultados.length > 0)
+                    ? resultados[0]
+                    : null;
 
-        Credito.actualizarEstado(
-            idCredito,
-            nuevoEstado,
-            (error) => {
+            Credito.actualizarEstado(
+                idCredito,
+                nuevoEstado,
+                (error) => {
 
-                if (error) {
+                    if (error) {
 
-                    console.error('❌ Error actualizando crédito:', error);
+                        console.error(
+                            '❌ Error actualizando crédito:',
+                            error
+                        );
 
-                    return res.status(500).json({
-                        ok: false,
-                        mensaje: 'Error al actualizar crédito'
-                    });
-                }
+                        return res.status(500).json({
+                            ok: false,
+                            mensaje:
+                                'Error al actualizar crédito'
+                        });
+                    }
 
-                if (clienteInfo && clienteInfo.EMAIL) {
+                    if (
+                        clienteInfo &&
+                        clienteInfo.EMAIL
+                    ) {
 
-                    enviarCorreoNotificacion(
-                        clienteInfo.EMAIL,
-                        clienteInfo.NOMBRE,
-                        nuevoEstado,
-                        idCredito
-                    );
+                        enviarCorreoNotificacion(
+                            clienteInfo.EMAIL,
+                            clienteInfo.NOMBRE,
+                            nuevoEstado,
+                            idCredito
+                        );
 
-                }
+                    }
 
-                // =========================================
-                // SI EL CRÉDITO FUE APROBADO
-                // =========================================
+                    // =========================================
+                    // SI EL CRÉDITO FUE APROBADO
+                    // =========================================
 
-                if (String(nuevoEstado).toLowerCase() === 'aprobado') {
+                    if (
+                        String(nuevoEstado).toLowerCase()
+                        === 'aprobado'
+                    ) {
 
-                    const queryBuscarCredito = `
-                        SELECT
-                            ID_USUARIO,
-                            MONTO_SOLICITADO,
-                            PLAZO_MESES
-                        FROM credito
-                        WHERE ID_CREDITO = ?
-                    `;
+                        const queryBuscarCredito = `
+                            SELECT
+                                ID_USUARIO,
+                                MONTO_SOLICITADO,
+                                PLAZO_MESES
+                            FROM credito
+                            WHERE ID_CREDITO = ?
+                        `;
 
-                    db.query(
-                        queryBuscarCredito,
-                        [idCredito],
-                        (errBusqueda, filas) => {
+                        db.query(
+                            queryBuscarCredito,
+                            [idCredito],
+                            (errBusqueda, filas) => {
 
-                            if (errBusqueda || filas.length === 0) {
+                                if (
+                                    errBusqueda ||
+                                    filas.length === 0
+                                ) {
 
-                                console.error(
-                                    '❌ Error buscando crédito para desembolso:',
-                                    errBusqueda
-                                );
+                                    console.error(
+                                        '❌ Error buscando crédito para desembolso:',
+                                        errBusqueda
+                                    );
 
-                                return res.status(200).json({
+                                    return res.status(200).json({
 
-                                    ok: true,
+                                        ok: true,
 
-                                    mensaje:
-                                        `Crédito N° ${idCredito} aprobado, pero falló la consulta para desembolsar.`
+                                        mensaje:
+                                            `Crédito N° ${idCredito} aprobado, pero falló la consulta para desembolsar.`
 
-                                });
-                            }
+                                    });
+                                }
 
-                            const registro = filas[0];
+                                const registro =
+                                    filas[0];
 
-                            const idUsuario = registro.ID_USUARIO;
+                                const idUsuario =
+                                    registro.ID_USUARIO;
 
-                            const montoSolicitado =
-                                Number(registro.MONTO_SOLICITADO) || 0;
+                                const montoSolicitado =
+                                    Number(
+                                        registro.MONTO_SOLICITADO
+                                    ) || 0;
 
-                            const plazoMeses =
-                                Number(registro.PLAZO_MESES) || 1;
-
-
-                            // =====================================
-                            // A. DESEMBOLSAR
-                            // =====================================
-
-                            Credito.desembolsarDinero(
-                                idUsuario,
-                                montoSolicitado,
-                                (errDesembolso) => {
-
-                                    if (errDesembolso) {
-                                        console.error(
-                                            '❌ Error desembolsando:',
-                                            errDesembolso
-                                        );
-                                    }
-
-
-                                    // =================================
-                                    // B. GENERAR CUOTAS
-                                    // =================================
-
-                                    const montoCuota =
-                                        (montoSolicitado / plazoMeses)
-                                            .toFixed(2);
-
-                                    const promisesCuotas = [];
+                                const plazoMeses =
+                                    Number(
+                                        registro.PLAZO_MESES
+                                    ) || 1;
 
 
-                                    for (
-                                        let i = 1;
-                                        i <= plazoMeses;
-                                        i++
-                                    ) {
+                                // =====================================
+                                // A. DESEMBOLSAR
+                                // =====================================
 
-                                        const fechaVencimiento =
-                                            new Date();
+                                Credito.desembolsarDinero(
+                                    idUsuario,
+                                    montoSolicitado,
+                                    (errDesembolso) => {
 
-                                        fechaVencimiento.setMonth(
-                                            fechaVencimiento.getMonth() + i
-                                        );
-
-                                        const insertCuota = `
-                                            INSERT INTO cuotas
-                                            (
-                                                ID_CREDITO,
-                                                NUMERO_CUOTA,
-                                                MONTO_CUOTA,
-                                                FECHA_VENCIMIENTO,
-                                                ESTADO
-                                            )
-                                            VALUES (?, ?, ?, ?, 'PENDIENTE')
-                                        `;
-
-                                        promisesCuotas.push(
-                                            new Promise(
-                                                (resolve, reject) => {
-
-                                                    db.query(
-                                                        insertCuota,
-                                                        [
-                                                            idCredito,
-                                                            i,
-                                                            montoCuota,
-                                                            fechaVencimiento
-                                                        ],
-                                                        (errCuota) => {
-
-                                                            if (errCuota) {
-                                                                reject(errCuota);
-                                                            } else {
-                                                                resolve();
-                                                            }
-
-                                                        }
-                                                    );
-
-                                                }
-                                            )
-                                        );
-
-                                    }
-
-
-                                    Promise.all(promisesCuotas)
-
-                                        .then(() => {
-
-                                            return res.status(200).json({
-
-                                                ok: true,
-
-                                                mensaje:
-                                                    `Crédito N° ${idCredito} APROBADO: Notificado, desembolsado y plan de cuotas generado (${plazoMeses} cuotas).`,
-
-                                                idCredito,
-
-                                                nuevoEstado
-
-                                            });
-
-                                        })
-
-                                        .catch((errPlan) => {
+                                        if (errDesembolso) {
 
                                             console.error(
-                                                '❌ Error creando cuotas:',
-                                                errPlan
+                                                '❌ Error desembolsando:',
+                                                errDesembolso
                                             );
 
-                                            return res.status(200).json({
+                                        }
 
-                                                ok: true,
 
-                                                mensaje:
-                                                    'Crédito aprobado y desembolsado, pero hubo un error registrando las cuotas.'
+                                        // =================================
+                                        // B. GENERAR CUOTAS
+                                        // =================================
 
-                                            });
+                                        const montoCuota =
+                                            (
+                                                montoSolicitado /
+                                                plazoMeses
+                                            ).toFixed(2);
 
-                                        });
+                                        const promisesCuotas =
+                                            [];
 
-                                }
-                            );
 
-                        }
-                    );
+                                        for (
+                                            let i = 1;
+                                            i <= plazoMeses;
+                                            i++
+                                        ) {
 
-                } else {
+                                            const fechaVencimiento =
+                                                new Date();
 
-                    return res.status(200).json({
+                                            fechaVencimiento.setMonth(
+                                                fechaVencimiento.getMonth() + i
+                                            );
 
-                        ok: true,
+                                            const insertCuota = `
+                                                INSERT INTO cuotas
+                                                (
+                                                    ID_CREDITO,
+                                                    NUMERO_CUOTA,
+                                                    MONTO_CUOTA,
+                                                    FECHA_VENCIMIENTO,
+                                                    ESTADO
+                                                )
+                                                VALUES (?, ?, ?, ?, 'PENDIENTE')
+                                            `;
 
-                        mensaje:
-                            `Estado del crédito N° ${idCredito} actualizado a '${nuevoEstado}'.`
+                                            promisesCuotas.push(
+                                                new Promise(
+                                                    (
+                                                        resolve,
+                                                        reject
+                                                    ) => {
 
-                    });
+                                                        db.query(
+                                                            insertCuota,
+                                                            [
+                                                                idCredito,
+                                                                i,
+                                                                montoCuota,
+                                                                fechaVencimiento
+                                                            ],
+                                                            (errCuota) => {
+
+                                                                if (
+                                                                    errCuota
+                                                                ) {
+
+                                                                    reject(
+                                                                        errCuota
+                                                                    );
+
+                                                                } else {
+
+                                                                    resolve();
+
+                                                                }
+
+                                                            }
+                                                        );
+
+                                                    }
+                                                )
+                                            );
+
+                                        }
+
+
+                                        Promise.all(
+                                            promisesCuotas
+                                        )
+
+                                            .then(() => {
+
+                                                return res.status(200).json({
+
+                                                    ok: true,
+
+                                                    mensaje:
+                                                        `Crédito N° ${idCredito} APROBADO: Notificado, desembolsado y plan de cuotas generado (${plazoMeses} cuotas).`,
+
+                                                    idCredito,
+
+                                                    nuevoEstado
+
+                                                });
+
+                                            })
+
+                                            .catch(
+                                                (errPlan) => {
+
+                                                    console.error(
+                                                        '❌ Error creando cuotas:',
+                                                        errPlan
+                                                    );
+
+                                                    return res.status(200).json({
+
+                                                        ok: true,
+
+                                                        mensaje:
+                                                            'Crédito aprobado y desembolsado, pero hubo un error registrando las cuotas.'
+
+                                                    });
+
+                                                }
+                                            );
+
+                                    }
+                                );
+
+                            }
+                        );
+
+                    } else {
+
+                        return res.status(200).json({
+
+                            ok: true,
+
+                            mensaje:
+                                `Estado del crédito N° ${idCredito} actualizado a '${nuevoEstado}'.`
+
+                        });
+
+                    }
 
                 }
+            );
 
-            }
-        );
-
-    });
+        }
+    );
 };
 
 
@@ -531,29 +643,37 @@ exports.borrarCredito = (req, res) => {
         req.body.idCredito ||
         req.body.id_credito;
 
-    Credito.eliminar(idCredito, (error) => {
+    Credito.eliminar(
+        idCredito,
+        (error) => {
 
-        if (error) {
+            if (error) {
 
-            console.error('❌ Error eliminando crédito:', error);
+                console.error(
+                    '❌ Error eliminando crédito:',
+                    error
+                );
 
-            return res.status(500).json({
-                ok: false,
-                mensaje: 'Error al eliminar el crédito'
+                return res.status(500).json({
+                    ok: false,
+                    mensaje:
+                        'Error al eliminar el crédito'
+                });
+            }
+
+            return res.status(200).json({
+
+                ok: true,
+
+                mensaje:
+                    'Crédito eliminado correctamente',
+
+                idCredito
+
             });
+
         }
-
-        return res.status(200).json({
-
-            ok: true,
-
-            mensaje: 'Crédito eliminado correctamente',
-
-            idCredito
-
-        });
-
-    });
+    );
 };
 
 
@@ -599,10 +719,6 @@ exports.obtenerEstadoUsuario = (req, res) => {
         [Number(cedula)],
         (error, filas) => {
 
-            // =========================================
-            // MOSTRAR ERROR REAL
-            // =========================================
-
             if (error) {
 
                 console.error(
@@ -614,17 +730,15 @@ exports.obtenerEstadoUsuario = (req, res) => {
 
                     ok: false,
 
-                    mensaje: 'Error al consultar estado',
+                    mensaje:
+                        'Error al consultar estado',
 
-                    error: error.message
+                    error:
+                        error.message
 
                 });
             }
 
-
-            // =========================================
-            // NO EXISTE CRÉDITO
-            // =========================================
 
             if (filas.length === 0) {
 
@@ -640,44 +754,40 @@ exports.obtenerEstadoUsuario = (req, res) => {
             }
 
 
-            // =========================================
-            // TOMAR PRIMER REGISTRO
-            // =========================================
-
-            const primerRegistro = filas[0];
+            const primerRegistro =
+                filas[0];
 
 
-            // =========================================
-            // ARMAR CUOTAS
-            // =========================================
+            const cuotas =
+                filas
+                    .filter(
+                        row =>
+                            row.ID_CUOTA !== null
+                    )
+                    .map(
+                        row => ({
 
-            const cuotas = filas
+                            idCuota:
+                                row.ID_CUOTA,
 
-                .filter(row => row.ID_CUOTA !== null)
+                            numeroCuota:
+                                row.NUMERO_CUOTA,
 
-                .map(row => ({
+                            montoCuota:
+                                row.MONTO_CUOTA,
 
-                    idCuota: row.ID_CUOTA,
+                            fechaVencimiento:
+                                row.FECHA_VENCIMIENTO,
 
-                    numeroCuota: row.NUMERO_CUOTA,
+                            estadoCuota:
+                                row.ESTADO_CUOTA,
 
-                    montoCuota: row.MONTO_CUOTA,
+                            fechaPago:
+                                row.FECHA_PAGO
 
-                    fechaVencimiento:
-                        row.FECHA_VENCIMIENTO,
+                        })
+                    );
 
-                    estadoCuota:
-                        row.ESTADO_CUOTA,
-
-                    fechaPago:
-                        row.FECHA_PAGO
-
-                }));
-
-
-            // =========================================
-            // RESPUESTA
-            // =========================================
 
             res.status(200).json({
 
