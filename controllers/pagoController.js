@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Función Helper para enviar comprobante por correo
+// Función para enviar comprobante por correo
 function enviarCorreoPago(emailDestino, nombreCliente, idPago, montoPagado, idCredito) {
 
     const asunto = `💳 Comprobante de Pago N° ${idPago} - Crédito Brocash N° ${idCredito}`;
@@ -78,22 +78,30 @@ function enviarCorreoPago(emailDestino, nombreCliente, idPago, montoPagado, idCr
 }
 
 
-// Consultar información del crédito aprobado para Realizar_Pago.html
+// 2. Consultar información del crédito para Realizar_Pago.html
 exports.obtenerEstadoPorId = (req, res) => {
 
     const { id } = req.params;
 
     const query = `
-        SELECT C.ID_CREDITO, C.ESTADO, C.MONTO_SOLICITADO, RU.NOMBRE
+        SELECT
+            C.ID_CREDITO,
+            C.ESTADO,
+            C.MONTO_SOLICITADO,
+            RU.NOMBRE
         FROM credito C
-        JOIN registro_usuario RU ON C.ID_USUARIO = RU.ID_USUARIO
+        JOIN registro_usuario RU
+            ON C.ID_USUARIO = RU.ID_USUARIO
         WHERE C.ID_CREDITO = ?`;
 
     db.query(query, [id], (err, resultados) => {
 
         if (err) {
 
-            console.error('❌ Error al consultar crédito por ID:', err);
+            console.error(
+                '❌ Error al consultar crédito por ID:',
+                err
+            );
 
             return res.status(500).json({
                 ok: false,
@@ -120,18 +128,21 @@ exports.obtenerEstadoPorId = (req, res) => {
             estado: credito.ESTADO,
 
             montoSolicitado:
-                credito.MONTO || credito.MONTO_SOLICITADO || 0,
+                credito.MONTO_SOLICITADO || 0,
 
             cuotas:
-                credito.CUOTAS || credito.PLAZO || 'N/A',
+                credito.CUOTAS ||
+                credito.PLAZO ||
+                'N/A',
 
-            cliente: credito.NOMBRE
+            cliente:
+                credito.NOMBRE
         });
     });
 };
 
 
-// Registrar pago del cliente en la tabla pago
+// 3. Registrar pago del cliente en la tabla pago
 exports.registrarPago = (req, res) => {
 
     const { idCredito, monto, metodo } = req.body;
@@ -140,7 +151,8 @@ exports.registrarPago = (req, res) => {
 
         return res.status(400).json({
             ok: false,
-            mensaje: 'Faltan datos requeridos (idCredito, monto, metodo).'
+            mensaje:
+                'Faltan datos requeridos (idCredito, monto, metodo).'
         });
     }
 
@@ -164,7 +176,8 @@ exports.registrarPago = (req, res) => {
 
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error al registrar el pago en la base de datos'
+                    mensaje:
+                        'Error al registrar el pago en la base de datos'
                 });
             }
 
@@ -175,9 +188,11 @@ exports.registrarPago = (req, res) => {
             );
 
 
-            // Obtener el correo del usuario para enviarle el comprobante
+            // 4. Obtener correo del usuario
             const sqlBuscarCliente = `
-                SELECT RU.EMAIL, RU.NOMBRE
+                SELECT
+                    RU.EMAIL,
+                    RU.NOMBRE
                 FROM credito C
                 JOIN registro_usuario RU
                     ON C.ID_USUARIO = RU.ID_USUARIO
@@ -197,6 +212,13 @@ exports.registrarPago = (req, res) => {
                             monto,
                             idCredito
                         );
+
+                    } else if (errCliente) {
+
+                        console.error(
+                            '❌ Error al buscar cliente para enviar comprobante:',
+                            errCliente
+                        );
                     }
 
                     return res.status(200).json({
@@ -207,6 +229,7 @@ exports.registrarPago = (req, res) => {
                             'Pago registrado con éxito y comprobante despachado al correo',
 
                         idPago
+
                     });
 
                 }
